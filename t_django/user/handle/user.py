@@ -26,7 +26,7 @@ class UserHandler(object):
                 return result_handler(None, msg='用户名或者密码错误')
             return result_handler(UserInfo(user))
 
-        else:
+        else:  # 其他请求方式
             return result_handler('请使用POST请求')
 
     # 用户注销

@@ -27,5 +27,4 @@ urlpatterns = [
     path('userList', UserHandler.user_list),
     path('createAndEdit', UserHandler.createAndEdit),
     path('delete', UserHandler.delete_user)
-
 ]

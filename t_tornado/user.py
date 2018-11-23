@@ -1,17 +1,10 @@
 import json
 
 import pymysql
-import tornado.httpserver
-import tornado.ioloop
-import tornado.options
 import tornado.web
+from t_tornado import BaseHandler
 
-from tornado.options import define, options
-
-define("port", default=8002, help="run on the given port", type=int)
-
-
-class UserLogin(tornado.web.RequestHandler):
+class UserLogin(BaseHandler):
     def get(self):
         self.write(result_format(None, msg='此接口不支持GET请求'))
 
@@ -37,6 +30,8 @@ class UserLogin(tornado.web.RequestHandler):
                     'username': data[1],
                     'email': data[3]
                 }
+                self.set_secure_cookie('user', data[1], expires_days=30)
+                print(self.get_current_user())
                 self.write(result_format(r))
             else:
                 self.write(result_format(None, msg='登录失败'))
@@ -48,8 +43,10 @@ class UserLogin(tornado.web.RequestHandler):
             db.close()
 
 
-class UserList(tornado.web.RequestHandler):
+class UserList(BaseHandler):
+    @tornado.web.authenticated
     def get(self):
+        print(self.current_user)
         db = pymysql.Connection(host='127.0.0.1', database='python_web', user='root', password='root1234',
                                 charset='utf8')
         try:
@@ -75,19 +72,23 @@ class UserList(tornado.web.RequestHandler):
             db.close()
 
 
-class UserLogout(tornado.web.RequestHandler):
+class UserLogout(BaseHandler):
+    @tornado.web.authenticated
     def get(self):
+        # 去除cookie
+        self.clear_cookie('user')
         self.write(result_format(''))
 
 
-class UserDelete(tornado.web.RequestHandler):
+class UserDelete(BaseHandler):
+    @tornado.web.authenticated
     def get(self):
         id = self.get_argument('id', 0)
         db = pymysql.Connection(host='127.0.0.1', database='python_web', user='root', password='root1234',
                                 charset='utf8')
         try:
             cursor = db.cursor()
-            row=cursor.execute("DELETE FROM user_sysuser WHERE id=%s" % id)
+            row = cursor.execute("DELETE FROM user_sysuser WHERE id=%s" % id)
             db.commit()
             if row > 0:
                 self.write(result_format(row))
@@ -101,7 +102,8 @@ class UserDelete(tornado.web.RequestHandler):
             db.close()
 
 
-class CreateUser(tornado.web.RequestHandler):
+class CreateUser(BaseHandler):
+    @tornado.web.authenticated
     def post(self, *args, **kwargs):
         json_result = json.loads(self.request.body)
         username = json_result.get('username')
@@ -145,17 +147,3 @@ def result_format(data, msg='服务器错误', error_code=400):
         }
         print(r)
         return r
-
-
-if __name__ == "__main__":
-    tornado.options.parse_command_line()
-    app = tornado.web.Application(handlers=[
-        (r"/login", UserLogin),
-        (r"/userList", UserList),
-        (r"/logout", UserLogout),
-        (r'/createAndEdit', CreateUser),
-        (r'/delete', UserDelete)
-    ], debug=True)
-    http_server = tornado.httpserver.HTTPServer(app)
-    http_server.listen(options.port)
-    tornado.ioloop.IOLoop.instance().start()

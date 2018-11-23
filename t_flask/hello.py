@@ -4,7 +4,7 @@ from flask import Flask, request
 app = Flask(__name__)
 
 
-@app.route('/')
+@app.route('/', methods=['get'])
 def hello_world():
     searchword = request.args.get('key', '')
     db = pymysql.Connection(host='127.0.0.1', database='python_web', user='root', password='root1234', charset='utf8')
