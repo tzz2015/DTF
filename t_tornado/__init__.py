@@ -20,18 +20,18 @@ def login_required(func):
 
 
 def result_format(data, msg='服务器错误', error_code=400):
+    r=''
     if data is None:
         r = {
             'code': error_code,
             'msg': msg,
             'data': None
         }
-        return r
     else:
         r = {
             'code': 200,
             'msg': '操作成功',
             'data': data
         }
-        print(r)
-        return r
+    print(r)
+    return r
